@@ -1,0 +1,153 @@
+// Components
+// App -> Board, Footer
+// Board -> Title, Columnheadings, User
+
+console.log("Fetch Polyfill should accommodate Safari errors");
+
+const App = (props) => {
+  return (
+    <div>
+      <Board />
+      <Footer />
+    </div>
+  );
+}
+
+const Title = (props) => {
+  return (
+    <tr>
+      <th className="leaderboard text-center" colSpan="4"><i className="fa fa-free-code-camp" aria-hidden="true"></i> freeCodeCamp Brownie Points Leaderboard</th>
+    </tr>
+  );
+}
+
+class Board extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      alltime: false,
+      campers: []
+    };
+    this.alltime = this.alltime.bind(this);
+    this.recent = this.recent.bind(this);
+  }
+  
+  componentDidMount() {
+    let url = "https://fcctop100.herokuapp.com/api/fccusers/top/recent";
+    this.getJSON(url);
+  }
+  
+  alltime() {
+    if (!this.state.alltime) {
+      this.setState({
+        alltime: true
+      });
+      let url = "https://fcctop100.herokuapp.com/api/fccusers/top/alltime";
+    this.getJSON(url);
+    }
+  }
+  
+  recent() {
+    if (this.state.alltime) {
+      this.setState({
+        alltime: false
+      });
+      let url = "https://fcctop100.herokuapp.com/api/fccusers/top/recent";
+      this.getJSON(url);
+    }
+  }
+  
+  getJSON(url) {
+    fetch(url)
+    .then((response) => response.json())
+    .then((parsedJSON) => {
+      this.setState({
+        campers: parsedJSON
+      });
+    })
+    .catch(error => console.log("parsing failed,", error));
+    
+  }
+  
+  render() {
+    let url = "https://www.freecodecamp.org/";
+    const objs = this.state.campers.map((obj, index) =>
+      <User
+        alltime={obj.alltime} // user alltime brownie points
+        img={obj.img} // user avatar
+        index={index + 1} // user ranking
+        key={obj.username} // unique key
+        name={obj.username} // user name
+        recent={obj.recent} // user past 30 days brownie points
+        url={url + obj.username} // link to FCC profile
+      />
+    );
+    return (
+    <table className="table table-bordered table-hover">
+      <thead>
+        <Title />
+        <Columnheadings
+          alltime={this.alltime} // functions
+          recent={this.recent}
+          boolean={this.state.alltime}
+        />
+      </thead>
+      <tbody>
+        {objs}
+      </tbody>
+    </table>
+    );
+  }
+}
+
+const Columnheadings = (props) => {
+  if (props.boolean) { // if alltime is true
+    return (
+      <tr>
+        <th>#</th>
+        <th>Camper</th>
+        <th><span onClick={props.recent}>Past 30 days</span></th>
+        <th><span onClick={props.alltime}>All Time</span> <i className="fa fa-caret-down" aria-hidden="true"></i></th>
+      </tr>
+    );
+  }
+  else { // if alltime is false (Past 30 Days was clicked)
+    return (
+      <tr>
+        <th>#</th>
+        <th>Camper</th>
+        <th><span onClick={props.recent}>Past 30 days</span> <i className="fa fa-caret-down" aria-hidden="true"></i></th>
+        <th><span onClick={props.alltime}>All Time</span></th>
+      </tr>
+    );
+  }
+}
+
+const User = (props) => {
+  return (
+    <tr key={props.key}>
+      <td className="index align-middle">
+        {props.index}
+      </td>
+      <td className="name align-middle">
+        <a href={props.url} target="_blank"><img src={props.img}/> {props.name}</a>
+      </td>
+      <td className="recent align-middle">
+        {props.recent}
+      </td>
+      <td className="alltime align-middle">
+        {props.alltime}
+      </td>
+    </tr>
+  );
+}
+
+const Footer = (props) => {
+  return (
+    <div className="footer">
+      <i><a href="https://www.freecodecamp.org/lieberscott" target="_blank">Scott Lieber</a></i>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("app"));
